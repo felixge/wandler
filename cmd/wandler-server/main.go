@@ -4,9 +4,11 @@ import (
 	"flag"
 	"fmt"
 	"github.com/felixge/wandler/config"
+	"github.com/felixge/wandler/http"
+	"github.com/felixge/wandler/job/queue"
 	"github.com/felixge/wandler/log"
 	"net"
-	"net/http"
+	gohttp "net/http"
 	"os"
 	"sync"
 )
@@ -15,12 +17,14 @@ var DefaultConfig = Config{
 	LogLevel:      "debug",
 	LogTimeFormat: "15:04:05.999",
 	HttpAddr:      ":8080",
+	JobQueue:      "redis://localhost:6379/",
 }
 
 type Config struct {
 	LogLevel      string
 	LogTimeFormat string
 	HttpAddr      string
+	JobQueue      string
 }
 
 func main() {
@@ -49,27 +53,41 @@ func main() {
 	}
 	log.Notice("Starting wandler server")
 
-	log.Debug("Creating http listener at: %s", conf.HttpAddr)
+	log.Debug("Creating job queue: %s", conf.JobQueue)
+	jobQueue, err := queue.NewQueue(conf.JobQueue, log)
+	if err != nil {
+		log.Emergency("Could not create job queue: %s", err)
+	}
+
+	log.Debug("Creating http listener addr=%s", conf.HttpAddr)
 	httpListener, err := net.Listen("tcp", conf.HttpAddr)
 	if err != nil {
 		log.Emergency("Could not create http listener: %s", err)
 	}
 
-	log.Debug("Initializing http server")
-	httpServer := &http.Server{}
+	log.Debug("Creating http handler")
+	httpHandler, err := http.NewHandler(http.HandlerConfig{
+		Log:   log,
+		Queue: jobQueue,
+	})
+	if err != nil {
+		log.Emergency("Could not create http handler: %s", err)
+	}
+
+	log.Debug("Creating http server")
+	httpServer := &gohttp.Server{Handler: httpHandler}
 
 	var shutdown sync.WaitGroup
 
 	shutdown.Add(1)
 	go func() {
 		defer shutdown.Done()
-		log.Debug("Serving http clients now")
+		log.Notice("Serving http clients now")
 		if err := httpServer.Serve(httpListener); err != nil {
 			log.Emergency("Error serving http: %s", err)
 		}
 	}()
 
-	log.Notice("Started wandler server")
 	shutdown.Wait()
-	log.Notice("Completed shutdown")
+	log.Notice("Shutting down")
 }
