@@ -2,7 +2,7 @@ package http
 
 import (
 	"github.com/felixge/wandler/job"
-	"github.com/felixge/wandler/job/queue"
+	"github.com/felixge/wandler/queue"
 	"github.com/felixge/wandler/log"
 	"io"
 	"net/http"

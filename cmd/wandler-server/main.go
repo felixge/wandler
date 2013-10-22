@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/felixge/wandler/config"
 	"github.com/felixge/wandler/http"
-	"github.com/felixge/wandler/job/queue"
+	"github.com/felixge/wandler/queue"
 	"github.com/felixge/wandler/log"
 	"net"
 	gohttp "net/http"
@@ -17,7 +17,7 @@ var DefaultConfig = Config{
 	LogLevel:      "debug",
 	LogTimeFormat: "15:04:05.999",
 	HttpAddr:      ":8080",
-	JobQueue:      "redis://localhost:6379/",
+	JobQueue:      "redis://localhost/",
 }
 
 type Config struct {

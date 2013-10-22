@@ -1,6 +1,5 @@
 test:
-	go test -i github.com/felixge/wandler/test/integration
-	go test github.com/felixge/wandler/test/integration
+	@./test.bash
 
 run: wandler-server
 	@./bin/$^
