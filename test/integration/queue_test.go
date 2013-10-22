@@ -7,7 +7,7 @@ import (
 )
 
 func TestEnqueueDequeue(t *testing.T) {
-	q, err := queue.NewQueue("redis://localhost/test", nil)
+	q, err := queue.NewQueue("redis://localhost/wandler.test", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
