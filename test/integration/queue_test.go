@@ -7,6 +7,7 @@ import (
 )
 
 func TestEnqueueDequeue(t *testing.T) {
+	// @TODO: allow config values to be injected into test suite
 	q, err := queue.NewQueue("redis://localhost/wandler.test", nil)
 	if err != nil {
 		t.Fatal(err)
