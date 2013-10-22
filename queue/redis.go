@@ -1,5 +1,6 @@
 package queue
 
+// @TODO: integrate logging
 // @TODO: config options for dial/read/write/dequeue timeouts (maybe one
 // timeout value suffices)
 // @TODO: support for retries

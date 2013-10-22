@@ -1,18 +1,21 @@
 package http
 
 import (
+	"encoding/json"
 	"github.com/felixge/wandler/job"
-	"github.com/felixge/wandler/queue"
 	"github.com/felixge/wandler/log"
+	"github.com/felixge/wandler/queue"
 	"io"
 	"net/http"
+	"strconv"
 )
 
 const multipartMaxMemory = 64 * 1024
 
 func NewHandler(c HandlerConfig) (*Handler, error) {
 	return &Handler{
-		log: c.Log,
+		log:   c.Log,
+		queue: c.Queue,
 	}, nil
 }
 
@@ -42,15 +45,37 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	j := &job.ImageJob{
+	width, err := strconv.ParseInt(r.Form.Get("width"), 10, 32)
+	if err != nil {
+		h.log.Warn("Bad http request: %s", err)
+		w.WriteHeader(http.StatusBadRequest)
+		io.WriteString(w, err.Error())
+		return
+	}
+	height, err := strconv.ParseInt(r.Form.Get("width"), 10, 32)
+	if err != nil {
+		h.log.Warn("Bad http request: %s", err)
+		w.WriteHeader(http.StatusBadRequest)
+		io.WriteString(w, err.Error())
+		return
+	}
+
+	j := &job.Image{
 		Common: job.Common{
 			Src: r.Form.Get("src"),
 			Dst: r.Form.Get("dst"),
 		},
-		Width:  r.Form.Get("width"),
-		Height: r.Form.Get("height"),
+		Width:  int(width),
+		Height: int(height),
 	}
 
-	h.log.Debug("Enqueuing job: %+v", j)
-	h.queue.Enqueue(j)
+	d, err := json.Marshal(j)
+	if err != nil {
+		h.log.Warn("Bad http request: %s", err)
+		w.WriteHeader(http.StatusBadRequest)
+		io.WriteString(w, err.Error())
+		return
+	}
+	h.log.Debug("Enqueuing job: %s", d)
+	h.queue.Enqueue(string(d))
 }
