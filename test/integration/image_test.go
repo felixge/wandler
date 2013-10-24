@@ -7,9 +7,16 @@ import (
 	"net/url"
 	"os"
 	"testing"
+	"time"
 )
 
 func TestImageResize(t *testing.T) {
+	worker, err := NewWorker()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer worker.Kill()
+
 	server, err := NewServer()
 	if err != nil {
 		t.Fatal(err)
@@ -32,4 +39,6 @@ func TestImageResize(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	time.Sleep(10*time.Second)
 }

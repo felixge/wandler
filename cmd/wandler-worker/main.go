@@ -6,7 +6,7 @@ import (
 	"github.com/felixge/wandler/config"
 	"github.com/felixge/wandler/queue"
 	"github.com/felixge/wandler/log"
-	"io"
+	"github.com/felixge/wandler/worker"
 	"os"
 )
 
@@ -46,7 +46,7 @@ func main() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	log.Notice("Starting wandler server")
+	log.Notice("Starting wandler worker")
 
 	log.Debug("Creating job queue: %s", conf.JobQueue)
 	q, err := queue.NewQueue(conf.JobQueue, log)
@@ -54,15 +54,8 @@ func main() {
 		log.Emergency("Could not create job queue: %s", err)
 	}
 
-
-	for {
-		msg, err := q.Dequeue()
-		if err == io.EOF {
-			continue
-		} else if err != nil {
-			panic(err)
-		}
-
-		fmt.Printf("received msg: %s\n", msg)
+	w, err := worker.NewWorker(log, q)
+	if err := w.Run(); err != nil {
+		os.Exit(1)
 	}
 }
