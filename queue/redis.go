@@ -64,13 +64,13 @@ func (q *redisQueue) Dequeue() (string, error) {
 	}
 
 	r, err := redis.Strings(c.Do("BLPOP", q.key(), "1"))
-	if err != nil {
+	if err == redis.ErrNil {
+		return "", io.EOF
+	} else if err != nil {
 		return "", err
 	}
 
-	if r == nil {
-		return "", io.EOF
-	} else if len(r) != 2 {
+	if len(r) != 2 {
 		return "", fmt.Errorf("redis queue: Expected 2 elements, got: %#v", r)
 	}
 	return r[1], nil

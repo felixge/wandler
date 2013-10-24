@@ -14,19 +14,22 @@ const multipartMaxMemory = 64 * 1024
 
 func NewHandler(c HandlerConfig) (*Handler, error) {
 	return &Handler{
-		log:   c.Log,
-		queue: c.Queue,
+		log:     c.Log,
+		queue:   c.Queue,
+		httpURL: c.HttpURL,
 	}, nil
 }
 
 type HandlerConfig struct {
-	Log   log.Interface
-	Queue queue.Interface
+	Log     log.Interface
+	Queue   queue.Interface
+	HttpURL string
 }
 
 type Handler struct {
-	log   log.Interface
-	queue queue.Interface
+	log     log.Interface
+	queue   queue.Interface
+	httpURL string
 }
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -62,8 +65,9 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	j := &job.Image{
 		Common: job.Common{
-			Src: r.Form.Get("src"),
-			Dst: r.Form.Get("dst"),
+			Src:       r.Form.Get("src"),
+			Dst:       r.Form.Get("dst"),
+			NotifyURL: h.httpURL + "/notify",
 		},
 		Width:  int(width),
 		Height: int(height),

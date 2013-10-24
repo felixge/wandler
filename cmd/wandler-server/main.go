@@ -5,11 +5,12 @@ import (
 	"fmt"
 	"github.com/felixge/wandler/config"
 	"github.com/felixge/wandler/http"
-	"github.com/felixge/wandler/queue"
 	"github.com/felixge/wandler/log"
+	"github.com/felixge/wandler/queue"
 	"net"
 	gohttp "net/http"
 	"os"
+	"strings"
 	"sync"
 )
 
@@ -17,14 +18,16 @@ var DefaultConfig = Config{
 	LogLevel:      "debug",
 	LogTimeFormat: "15:04:05.999",
 	HttpAddr:      ":8080",
-	JobQueue:      "redis://localhost/",
+	Queue:         "redis://localhost/",
+	HttpURL:       "http://localhost:8080/",
 }
 
 type Config struct {
 	LogLevel      string
 	LogTimeFormat string
 	HttpAddr      string
-	JobQueue      string
+	Queue         string
+	HttpURL       string
 }
 
 func main() {
@@ -46,6 +49,9 @@ func main() {
 		}
 	}
 
+	// remove trailing /
+	conf.HttpURL = strings.TrimSuffix(conf.HttpURL, "/")
+
 	log, err := log.NewLogger(conf.LogLevel, conf.LogTimeFormat, os.Stdout)
 	if err != nil {
 		fmt.Println(err)
@@ -53,8 +59,8 @@ func main() {
 	}
 	log.Notice("Starting wandler server")
 
-	log.Debug("Creating job queue: %s", conf.JobQueue)
-	jobQueue, err := queue.NewQueue(conf.JobQueue, log)
+	log.Debug("Creating job queue: %s", conf.Queue)
+	q, err := queue.NewQueue(conf.Queue, log)
 	if err != nil {
 		log.Emergency("Could not create job queue: %s", err)
 	}
@@ -67,8 +73,9 @@ func main() {
 
 	log.Debug("Creating http handler")
 	httpHandler, err := http.NewHandler(http.HandlerConfig{
-		Log:   log,
-		Queue: jobQueue,
+		Log:     log,
+		Queue:   q,
+		HttpURL: conf.HttpURL,
 	})
 	if err != nil {
 		log.Emergency("Could not create http handler: %s", err)

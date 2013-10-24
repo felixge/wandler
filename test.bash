@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -eu
 ./build.bash
 pkgs=$(
   find . \
