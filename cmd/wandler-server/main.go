@@ -4,7 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/felixge/wandler/config"
-	"github.com/felixge/wandler/http"
+	"github.com/felixge/wandler/server/http"
 	"github.com/felixge/wandler/log"
 	"github.com/felixge/wandler/queue"
 	"net"
