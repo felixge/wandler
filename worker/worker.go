@@ -7,6 +7,8 @@ import (
 	"github.com/felixge/wandler/log"
 	"github.com/felixge/wandler/queue"
 	"io"
+	"launchpad.net/goamz/s3"
+	"launchpad.net/goamz/aws"
 	"net/http"
 	"os"
 	"os/exec"
@@ -74,5 +76,24 @@ func (w *Worker) execute(j *job.Image) error {
 		return w.log.Err("could not execute cmd: %#v: %s", cmd, err)
 	}
 	w.log.Debug("result: %s", outputName)
+
+	w.log.Debug("uploading: %s", outputName)
+	s3Client := s3.New(aws.Auth{"AKIAIB4GPTR33DWBA2KQ", "80mK+Jw9rF653JrYJK2Ca4Eh2S1E+d7OWEtNjbbJ"}, aws.USEast)
+	bucket := s3Client.Bucket("test.wandler.io")
+	resultFile, err := os.Open(outputName)
+	if err != nil {
+		return w.log.Err("could not open: %s: %s", outputName, err)
+	}
+	defer resultFile.Close()
+
+	fi, err := resultFile.Stat()
+	if err != nil {
+		return w.log.Err("could not stat: %s: %s", outputName, err)
+	}
+
+	if err := bucket.PutReader(outputName, resultFile, fi.Size(), "image/png", s3.PublicRead); err != nil {
+		return w.log.Err("could not put: %s: %s", outputName, err)
+	}
+	w.log.Debug("uploaded: %s", bucket.URL(outputName))
 	return nil
 }
