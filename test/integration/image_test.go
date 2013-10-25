@@ -2,12 +2,10 @@ package integration
 
 import (
 	"fmt"
-	"io"
+	"io/ioutil"
 	"net/http"
 	"net/url"
-	"os"
 	"testing"
-	"time"
 )
 
 func TestImageResize(t *testing.T) {
@@ -35,10 +33,10 @@ func TestImageResize(t *testing.T) {
 
 	fmt.Printf("headers: %#v\n", resp.Header)
 	defer resp.Body.Close()
-	_, err = io.Copy(os.Stdout, resp.Body)
+	u, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	time.Sleep(10*time.Second)
+	fmt.Printf("url: %s\n", u)
 }

@@ -10,6 +10,7 @@ import (
 	"launchpad.net/goamz/s3"
 	"launchpad.net/goamz/aws"
 	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -94,6 +95,16 @@ func (w *Worker) execute(j *job.Image) error {
 	if err := bucket.PutReader(outputName, resultFile, fi.Size(), "image/png", s3.PublicRead); err != nil {
 		return w.log.Err("could not put: %s: %s", outputName, err)
 	}
-	w.log.Debug("uploaded: %s", bucket.URL(outputName))
+	uploadUrl := bucket.URL(outputName)
+	w.log.Debug("uploaded: %s", uploadUrl)
+
+	w.log.Debug("notifying: %s", j.NotifyURL)
+	resp, err = http.PostForm(j.NotifyURL, url.Values{"url": []string{uploadUrl}})
+	if err != nil {
+		return w.log.Err("could not notify: %s: %s", j.NotifyURL, err)
+	}
+	defer resp.Body.Close()
+	w.log.Debug("notified: %s", j.NotifyURL)
+
 	return nil
 }
